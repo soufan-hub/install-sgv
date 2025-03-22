@@ -15,6 +15,11 @@ function info {
   echo -e "\033[96m$1\033[0m"
 }
 
+if ! command -v vim &>/dev/null; then
+  info "📦 vim não encontrado. Instalando..."
+  sudo apt update && sudo apt install vim -y || error "Falha ao instalar vim."
+fi
+
 # Limpar diretório temporário na saída
 trap "rm -rf $TMP_DIR" EXIT
 
@@ -44,6 +49,18 @@ EXTRACTED_DIR=$(find "$TMP_DIR" -maxdepth 1 -type d -name "*install-sgv*" | head
 [ -z "$EXTRACTED_DIR" ] && error "Falha ao encontrar o diretório extraído."
 
 cd "$EXTRACTED_DIR"
+
+info "📂 Conteúdo do diretório extraído:"
+ls -la
+
+# Verificar existência dos scripts necessários
+if [ ! -f installDocker.sh ]; then
+  error "Arquivo installDocker.sh não encontrado no diretório extraído."
+fi
+
+if [ ! -f installSgv.sh ]; then
+  error "Arquivo installSgv.sh não encontrado no diretório extraído."
+fi
 
 info "🐳 Instalando Docker..."
 chmod +x installDocker.sh

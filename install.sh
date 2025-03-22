@@ -15,11 +15,6 @@ function info {
   echo -e "\033[96m$1\033[0m"
 }
 
-if ! command -v vim &>/dev/null; then
-  info "📦 vim não encontrado. Instalando..."
-  sudo apt update && sudo apt install vim -y || error "Falha ao instalar vim."
-fi
-
 # Limpar diretório temporário na saída
 trap "rm -rf $TMP_DIR" EXIT
 
@@ -48,26 +43,24 @@ unzip -q "$ZIP_FILE" -d "$TMP_DIR"
 EXTRACTED_DIR=$(find "$TMP_DIR" -maxdepth 1 -type d -name "*install-sgv*" | head -n 1)
 [ -z "$EXTRACTED_DIR" ] && error "Falha ao encontrar o diretório extraído."
 
+info "📂 Listando conteúdo do diretório extraído:"
+ls -la "$EXTRACTED_DIR"
+
 cd "$EXTRACTED_DIR"
 
-info "📂 Conteúdo do diretório extraído:"
-ls -la
+# Procurar recursivamente pelos scripts
+DOCKER_SCRIPT=$(find . -type f -name "installDocker.sh" | head -n 1)
+SGV_SCRIPT=$(find . -type f -name "installSgv.sh" | head -n 1)
 
-# Verificar existência dos scripts necessários
-if [ ! -f installDocker.sh ]; then
-  error "Arquivo installDocker.sh não encontrado no diretório extraído."
-fi
-
-if [ ! -f installSgv.sh ]; then
-  error "Arquivo installSgv.sh não encontrado no diretório extraído."
-fi
+[ -z "$DOCKER_SCRIPT" ] && error "Arquivo installDocker.sh não encontrado na release."
+[ -z "$SGV_SCRIPT" ] && error "Arquivo installSgv.sh não encontrado na release."
 
 info "🐳 Instalando Docker..."
-chmod +x installDocker.sh
-./installDocker.sh || error "Falha ao executar installDocker.sh"
+chmod +x "$DOCKER_SCRIPT"
+"$DOCKER_SCRIPT" || error "Falha ao executar installDocker.sh"
 
 info "🚀 Instalando SGV..."
-chmod +x installSgv.sh
-./installSgv.sh || error "Falha ao executar installSgv.sh"
+chmod +x "$SGV_SCRIPT"
+"$SGV_SCRIPT" || error "Falha ao executar installSgv.sh"
 
 info "✅ Instalação finalizada com sucesso!"

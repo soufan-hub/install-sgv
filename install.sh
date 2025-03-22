@@ -15,7 +15,7 @@ function info {
   echo -e "\033[96m$1\033[0m"
 }
 
-# Cleanup on exit
+# Limpar diretório temporário na saída
 trap "rm -rf $TMP_DIR" EXIT
 
 info "🌀 Criando diretório temporário em $TMP_DIR..."
@@ -30,17 +30,21 @@ ZIP_URL=$(curl -s https://api.github.com/repos/${REPO}/releases/latest \
 
 curl -L "$ZIP_URL" -o "$ZIP_FILE" || error "Falha ao baixar o zip da release."
 
+# Verificar se o unzip está instalado, caso contrário, instalá-lo
+if ! command -v unzip &>/dev/null; then
+  info "📦 unzip não encontrado. Instalando..."
+  sudo apt update && sudo apt install unzip -y || error "Falha ao instalar unzip."
+fi
+
 info "📦 Extraindo arquivos..."
 unzip -q "$ZIP_FILE" -d "$TMP_DIR"
 
-# Encontrar o diretório extraído (ele tem nome com hash)
+# Encontrar o diretório extraído (nome com hash)
 EXTRACTED_DIR=$(find "$TMP_DIR" -maxdepth 1 -type d -name "*install-sgv*" | head -n 1)
-
 [ -z "$EXTRACTED_DIR" ] && error "Falha ao encontrar o diretório extraído."
 
 cd "$EXTRACTED_DIR"
 
-# Executar os scripts
 info "🐳 Instalando Docker..."
 chmod +x installDocker.sh
 ./installDocker.sh || error "Falha ao executar installDocker.sh"

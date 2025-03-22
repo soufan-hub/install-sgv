@@ -2,73 +2,61 @@
 set -euo pipefail
 
 REQUIRED_DOCKER_VERSION="24.0.2"
+DOCKER_REPO_URL="https://download.docker.com/linux/ubuntu"
+UBUNTU_CODENAME=$(lsb_release -cs)  # ex: focal, bionic, etc.
 
-function error {
-  echo -e "\\e[91m$1\\e[39m"
-  exit 1
-}
+echo "Atualizando listas de pacotes..."
+sudo apt-get update -qq
 
-function check_internet {
-  printf "Checking if you are online... "
-  if wget -q --spider http://github.com; then
-    echo "Online. Continuing."
-  else
-    error "Offline. Go connect to the internet then run the script again."
-  fi
-}
+echo "Instalando pacotes necessários: ca-certificates, curl, gnupg e lsb-release..."
+sudo apt-get install -y -qq ca-certificates curl gnupg lsb-release
 
-function install_dependencies {
-  echo "Updating package lists..."
-  sudo apt update || error "Failed to update package lists."
+echo "Configurando repositório do Docker..."
+sudo install -m 0755 -d /etc/apt/keyrings
+curl -fsSL "${DOCKER_REPO_URL}/gpg" | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
+echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] ${DOCKER_REPO_URL} ${UBUNTU_CODENAME} stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
 
-  echo "Installing required packages: curl and docker-compose..."
-  sudo apt install -y curl docker-compose || error "Failed to install dependencies."
-}
+echo "Atualizando listas de pacotes novamente..."
+sudo apt-get update -qq
 
-function is_docker_installed {
-  if command -v docker &>/dev/null; then
-    return 0
-  else
-    return 1
-  fi
-}
+# Verifica se o Docker já está instalado e qual a versão
+if command -v docker &>/dev/null; then
+    current_version=$(docker --version | grep -oP '\d+\.\d+\.\d+')
+    echo "Versão atual do Docker: $current_version"
+else
+    current_version="none"
+    echo "Docker não está instalado."
+fi
 
-function check_docker_version {
-  local current_version
-  current_version=$(docker --version 2>/dev/null | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' || true)
-  if [[ "$current_version" == "$REQUIRED_DOCKER_VERSION" ]]; then
-    return 0
-  else
-    return 1
-  fi
-}
-
-function install_docker {
-  echo "Installing Docker..."
-  curl -sSL https://get.docker.com | sh || error "Failed to install Docker."
-  sudo usermod -aG docker "$USER" || error "Failed to add user to docker group."
-  # Reinitialize group membership for the current session
-  newgrp docker || true
-}
-
-function main {
-  install_dependencies
-  check_internet
-
-  if is_docker_installed; then
-    echo "Docker is already installed."
-    if check_docker_version; then
-      echo "Docker version is up-to-date ($REQUIRED_DOCKER_VERSION)."
-    else
-      echo "Docker version is not $REQUIRED_DOCKER_VERSION. Upgrading..."
-      install_docker
+if [ "$current_version" != "$REQUIRED_DOCKER_VERSION" ]; then
+    echo "Instalando o Docker na versão $REQUIRED_DOCKER_VERSION..."
+    if [ "$current_version" != "none" ]; then
+      echo "Removendo versão atual ($current_version)..."
+      sudo apt-get remove -y docker-ce docker-ce-cli containerd.io docker-compose-plugin || true
     fi
-  else
-    install_docker
-  fi
 
-  echo "Final Docker version:"
-  docker --version
-}
+    # Obtém a string completa da versão a ser instalada a partir do repositório
+    TARGET_VERSION=$(apt-cache madison docker-ce | grep "$REQUIRED_DOCKER_VERSION" | head -n1 | awk '{print $3}')
+    if [ -z "$TARGET_VERSION" ]; then
+        echo "Versão requerida $REQUIRED_DOCKER_VERSION não encontrada no repositório."
+        exit 1
+    fi
+    echo "Versão alvo encontrada: $TARGET_VERSION"
+    sudo apt-get install -y docker-ce="$TARGET_VERSION" docker-ce-cli="$TARGET_VERSION" containerd.io docker-compose-plugin docker-ce-rootless-extras docker-buildx-plugin
+else
+    echo "Docker já está na versão requerida ($REQUIRED_DOCKER_VERSION)."
+fi
 
-main
+# Garante que o daemon do Docker esteja ativo
+if ! systemctl is-active --quiet docker; then
+    echo "Daemon do Docker não está ativo. Iniciando o Docker..."
+    sudo systemctl start docker
+    sleep 5
+    if ! systemctl is-active --quiet docker; then
+        echo "Falha ao iniciar o daemon do Docker. Verifique o status do serviço."
+        exit 1
+    fi
+fi
+
+echo "Instalação/atualização do Docker concluída. Versão final:"
+docker --version

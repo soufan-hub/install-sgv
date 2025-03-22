@@ -1,0 +1,71 @@
+version: "3.3"
+services:
+  portainer:
+    image: portainer/portainer-ce:latest
+    container_name: portainer
+    restart: always
+    ports:
+      - "9443:9443"
+      - "9000:9000"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - portainer_data:/data
+  postgres:
+    image: postgres:16.8
+    container_name: postgres
+    restart: always
+    environment:
+      - POSTGRES_PASSWORD=alo2020
+      - POSTGRES_USER=alo
+      - POSTGRES_DB=alop_sgv
+      - PGDATA=/var/lib/postgresql/data/pgdata
+    expose:
+      - "5432"
+    ports:
+      - "5432:5432"
+    volumes:
+      - /etc/timezone:/etc/timezone
+      - /etc/localtime:/etc/localtime
+      - ./.postgresql-data/:/var/lib/postgresql/data/pgdata
+      - ./postgres/initdb.sh:/docker-entrypoint-initdb.d/initdb.sh
+      - ./backup/alo.dump:/tmp/alo.dump
+    healthcheck:
+      test: ["CMD-SHELL", "set -e", "pg_isready -d $POSTGRES_DB -U $POSTGRES_USER"]
+      interval: 2s
+      timeout: 2s
+      retries: 10
+  mongodb:
+    image: mongo:3.2
+    restart: always
+    container_name: mongodb
+    expose:
+      - "27017"
+    ports:
+      - "27017:27017"
+    volumes:
+      - ./.mongodb-data:/data/db
+      - /etc/timezone:/etc/timezone
+      - /etc/localtime:/etc/localtime
+
+  tomcat:
+    container_name: tomcat
+    restart: always
+    environment:
+      - PGPASSWORD=alo2020
+      - JAVA_OPTS=-server -Xmx10g -Xms512m -XX:+UseConcMarkSweepGC -XX:+CMSParallelRemarkEnabled -XX:+UseCompressedOops -XX:+UseCMSInitiatingOccupancyOnly -XX:CMSInitiatingOccupancyFraction=70 -XX:+ScavengeBeforeFullGC -XX:+CMSScavengeBeforeRemark -Dalo.env=P -DmongoHost=mongodb:27017 -Dalo.hibernate.hbm2ddl.auto=none -Dlog.path=/java/logs -Duser.timezone=GMT-3
+    build: ./tomcat/
+    ports:
+      - "80:8080"
+    links:
+      - postgres
+      - mongodb
+    volumes:
+      - /etc/localtime:/etc/localtime
+      - /etc/timezone:/etc/timezone
+      - ./.webapps:/java/tomcat/webapps
+      - $HOME/SGV_BACKUPS:/java/bkps
+    depends_on:
+      - postgres
+      
+volumes:
+  portainer_data:

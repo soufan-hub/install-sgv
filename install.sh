@@ -15,70 +15,84 @@ function info {
   echo -e "\033[96m$1\033[0m"
 }
 
-# Limpar diretório temporário na saída
+# Clean up temporary directory on exit
 trap "rm -rf $TMP_DIR" EXIT
 
-info "🌀 Criando diretório temporário em $TMP_DIR..."
+info "🌀 Creating temporary directory at $TMP_DIR..."
 mkdir -p "$TMP_DIR"
 
-info "📥 Baixando última release de $REPO..."
+info "📥 Downloading latest release from $REPO..."
 ZIP_URL=$(curl -s https://api.github.com/repos/${REPO}/releases/latest \
   | grep "zipball_url" \
   | cut -d '"' -f 4)
 
-[ -z "$ZIP_URL" ] && error "Não foi possível encontrar a última release."
+[ -z "$ZIP_URL" ] && error "Could not find the latest release."
 
-curl -L "$ZIP_URL" -o "$ZIP_FILE" || error "Falha ao baixar o zip da release."
+curl -L "$ZIP_URL" -o "$ZIP_FILE" || error "Failed to download the release zip."
 
-# Verificar se o unzip está instalado, caso contrário, instalá-lo
+# Ensure unzip is installed
 if ! command -v unzip &>/dev/null; then
-  info "📦 unzip não encontrado. Instalando..."
-  sudo apt update && sudo apt install unzip -y || error "Falha ao instalar unzip."
+  info "📦 'unzip' not found. Installing..."
+  sudo apt update && sudo apt install unzip -y || error "Failed to install unzip."
 fi
 
-# Verificar se o vim está instalado, se não, instalar
+# Ensure vim is installed
 if ! command -v vim &>/dev/null; then
-  info "📝 vim não encontrado. Instalando..."
-  sudo apt update && sudo apt install vim -y || error "Falha ao instalar vim."
+  info "📝 'vim' not found. Installing..."
+  sudo apt update && sudo apt install vim -y || error "Failed to install vim."
 fi
 
-info "📦 Extraindo arquivos..."
+info "📦 Extracting files..."
 unzip -q "$ZIP_FILE" -d "$TMP_DIR"
 
-# Encontrar o diretório extraído (nome com hash)
+# Find the extracted directory (with a name that includes "install-sgv")
 EXTRACTED_DIR=$(find "$TMP_DIR" -maxdepth 1 -type d -name "*install-sgv*" | head -n 1)
-[ -z "$EXTRACTED_DIR" ] && error "Falha ao encontrar o diretório extraído."
+[ -z "$EXTRACTED_DIR" ] && error "Failed to find the extracted directory."
 
-info "📂 Listando conteúdo do diretório extraído:"
+info "📂 Listing content of the extracted directory ($EXTRACTED_DIR):"
 ls -la "$EXTRACTED_DIR"
+
+# Print a recursive file listing to help debug file names
+info "🔍 Full recursive file listing:"
+find "$EXTRACTED_DIR" -type f
 
 cd "$EXTRACTED_DIR"
 
-# Função para encontrar o script com diferentes padrões
+# Function to find a script file by matching one of several patterns
 function find_script {
-  local script=""
+  local found=""
   for pattern in "$@"; do
-    script=$(find . -type f -iname "$pattern" | head -n 1)
-    if [ -n "$script" ]; then
-      echo "$script"
+    found=$(find . -type f -iname "$pattern" | head -n 1)
+    if [ -n "$found" ]; then
+      echo "$found"
       return 0
     fi
   done
   return 1
 }
 
+# Try different patterns for Docker install script
 DOCKER_SCRIPT=$(find_script "installDocker.sh" "install-docker.sh" "docker.sh")
-[ -z "$DOCKER_SCRIPT" ] && error "Arquivo de instalação do Docker não encontrado."
+if [ -z "$DOCKER_SCRIPT" ]; then
+  info "Available files in the current directory tree:"
+  find . -type f
+  error "Docker installation script not found. Please verify the filename inside the zip."
+fi
 
+# Try different patterns for SGV install script
 SGV_SCRIPT=$(find_script "installSgv.sh" "install-sgv.sh" "sgv.sh")
-[ -z "$SGV_SCRIPT" ] && error "Arquivo de instalação do SGV não encontrado."
+if [ -z "$SGV_SCRIPT" ]; then
+  info "Available files in the current directory tree:"
+  find . -type f
+  error "SGV installation script not found. Please verify the filename inside the zip."
+fi
 
-info "🐳 Instalando Docker..."
+info "🐳 Installing Docker using: $DOCKER_SCRIPT"
 chmod +x "$DOCKER_SCRIPT"
-"$DOCKER_SCRIPT" || error "Falha ao executar o script de instalação do Docker: $DOCKER_SCRIPT"
+"$DOCKER_SCRIPT" || error "Failed to execute Docker installation script: $DOCKER_SCRIPT"
 
-info "🚀 Instalando SGV..."
+info "🚀 Installing SGV using: $SGV_SCRIPT"
 chmod +x "$SGV_SCRIPT"
-"$SGV_SCRIPT" || error "Falha ao executar o script de instalação do SGV: $SGV_SCRIPT"
+"$SGV_SCRIPT" || error "Failed to execute SGV installation script: $SGV_SCRIPT"
 
-info "✅ Instalação finalizada com sucesso!"
+info "✅ Installation completed successfully!"

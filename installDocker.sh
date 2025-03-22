@@ -3,7 +3,7 @@ set -euo pipefail
 
 REQUIRED_DOCKER_VERSION="24.0.2"
 DOCKER_REPO_URL="https://download.docker.com/linux/ubuntu"
-UBUNTU_CODENAME=$(lsb_release -cs)  # ex: focal, bionic, etc.
+UBUNTU_CODENAME=$(lsb_release -cs)
 
 echo "Atualizando listas de pacotes..."
 sudo apt-get update -qq
@@ -13,13 +13,21 @@ sudo apt-get install -y -qq ca-certificates curl gnupg lsb-release
 
 echo "Configurando repositório do Docker..."
 sudo install -m 0755 -d /etc/apt/keyrings
+
+# Remove existing key file to avoid interactive prompt
+if [ -f /etc/apt/keyrings/docker.gpg ]; then
+    echo "Removendo /etc/apt/keyrings/docker.gpg existente..."
+    sudo rm -f /etc/apt/keyrings/docker.gpg
+fi
+
 curl -fsSL "${DOCKER_REPO_URL}/gpg" | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
+
 echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] ${DOCKER_REPO_URL} ${UBUNTU_CODENAME} stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
 
 echo "Atualizando listas de pacotes novamente..."
 sudo apt-get update -qq
 
-# Verifica se o Docker já está instalado e qual a versão
+# Verifica se o Docker já está instalado e obtém a versão
 if command -v docker &>/dev/null; then
     current_version=$(docker --version | grep -oP '\d+\.\d+\.\d+')
     echo "Versão atual do Docker: $current_version"
@@ -35,7 +43,6 @@ if [ "$current_version" != "$REQUIRED_DOCKER_VERSION" ]; then
       sudo apt-get remove -y docker-ce docker-ce-cli containerd.io docker-compose-plugin || true
     fi
 
-    # Obtém a string completa da versão a ser instalada a partir do repositório
     TARGET_VERSION=$(apt-cache madison docker-ce | grep "$REQUIRED_DOCKER_VERSION" | head -n1 | awk '{print $3}')
     if [ -z "$TARGET_VERSION" ]; then
         echo "Versão requerida $REQUIRED_DOCKER_VERSION não encontrada no repositório."

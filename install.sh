@@ -36,6 +36,12 @@ if ! command -v unzip &>/dev/null; then
   sudo apt update && sudo apt install unzip -y || error "Falha ao instalar unzip."
 fi
 
+# Verificar se o vim está instalado, se não, instalar
+if ! command -v vim &>/dev/null; then
+  info "📝 vim não encontrado. Instalando..."
+  sudo apt update && sudo apt install vim -y || error "Falha ao instalar vim."
+fi
+
 info "📦 Extraindo arquivos..."
 unzip -q "$ZIP_FILE" -d "$TMP_DIR"
 
@@ -48,19 +54,31 @@ ls -la "$EXTRACTED_DIR"
 
 cd "$EXTRACTED_DIR"
 
-# Procurar recursivamente pelos scripts
-DOCKER_SCRIPT=$(find . -type f -name "installDocker.sh" | head -n 1)
-SGV_SCRIPT=$(find . -type f -name "installSgv.sh" | head -n 1)
+# Função para encontrar o script com diferentes padrões
+function find_script {
+  local script=""
+  for pattern in "$@"; do
+    script=$(find . -type f -iname "$pattern" | head -n 1)
+    if [ -n "$script" ]; then
+      echo "$script"
+      return 0
+    fi
+  done
+  return 1
+}
 
-[ -z "$DOCKER_SCRIPT" ] && error "Arquivo installDocker.sh não encontrado na release."
-[ -z "$SGV_SCRIPT" ] && error "Arquivo installSgv.sh não encontrado na release."
+DOCKER_SCRIPT=$(find_script "installDocker.sh" "install-docker.sh" "docker.sh")
+[ -z "$DOCKER_SCRIPT" ] && error "Arquivo de instalação do Docker não encontrado."
+
+SGV_SCRIPT=$(find_script "installSgv.sh" "install-sgv.sh" "sgv.sh")
+[ -z "$SGV_SCRIPT" ] && error "Arquivo de instalação do SGV não encontrado."
 
 info "🐳 Instalando Docker..."
 chmod +x "$DOCKER_SCRIPT"
-"$DOCKER_SCRIPT" || error "Falha ao executar installDocker.sh"
+"$DOCKER_SCRIPT" || error "Falha ao executar o script de instalação do Docker: $DOCKER_SCRIPT"
 
 info "🚀 Instalando SGV..."
 chmod +x "$SGV_SCRIPT"
-"$SGV_SCRIPT" || error "Falha ao executar installSgv.sh"
+"$SGV_SCRIPT" || error "Falha ao executar o script de instalação do SGV: $SGV_SCRIPT"
 
 info "✅ Instalação finalizada com sucesso!"

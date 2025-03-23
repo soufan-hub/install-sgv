@@ -31,4 +31,4 @@ docker compose stop tomcat
 sleep 10
 docker compose start tomcat
 
-echo "✅ SGV instalado e containers em execução!"
+echo "✅ SGV instalado e containers em execução em http://localhost/sgv"

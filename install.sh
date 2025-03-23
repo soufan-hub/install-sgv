@@ -4,6 +4,7 @@ set -euo pipefail
 REPO="soufan-hub/install-sgv"
 TMP_DIR="./install-sgv"
 ZIP_FILE="$TMP_DIR/latest.zip"
+mkdir -p "$TMP_DIR"
 
 function error {
   echo -e "\033[91mERROR: $1\033[0m"

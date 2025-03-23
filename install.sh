@@ -14,49 +14,46 @@ function info {
   echo -e "\033[96m$1\033[0m"
 }
 
-# Limpar diretório temporário na saída
+# Clean up temporary directory on exit
 trap "rm -rf $TMP_DIR" EXIT
 
-info "🌀 Criando diretório temporário em $TMP_DIR..."
+info "🌀 Creating temporary directory at $TMP_DIR..."
 mkdir -p "$TMP_DIR"
 
-info "📥 Baixando última release de $REPO..."
-ZIP_URL=$(curl -s https://api.github.com/repos/${REPO}/releases/latest \
-  | grep "zipball_url" \
-  | cut -d '"' -f 4)
-[ -z "$ZIP_URL" ] && error "Não foi possível encontrar a última release."
+info "📥 Downloading latest release from $REPO..."
+ZIP_URL=$(curl -s https://api.github.com/repos/${REPO}/releases/latest | grep "zipball_url" | cut -d '"' -f 4)
+[ -z "$ZIP_URL" ] && error "Could not find the latest release."
+curl -L "$ZIP_URL" -o "$ZIP_FILE" || error "Failed to download the release zip."
 
-curl -L "$ZIP_URL" -o "$ZIP_FILE" || error "Falha ao baixar o zip da release."
-
-# Verificar se o unzip está instalado; se não, instala
+# Ensure unzip is installed
 if ! command -v unzip &>/dev/null; then
-  info "📦 'unzip' não encontrado. Instalando..."
-  sudo apt update && sudo apt install unzip -y || error "Falha ao instalar unzip."
+  info "📦 'unzip' not found. Installing..."
+  sudo apt update && sudo apt install unzip -y || error "Failed to install unzip."
 fi
 
-# Verificar se o vim está instalado; se não, instala
+# Ensure vim is installed
 if ! command -v vim &>/dev/null; then
-  info "📝 'vim' não encontrado. Instalando..."
-  sudo apt update && sudo apt install vim -y || error "Falha ao instalar vim."
+  info "📝 'vim' not found. Installing..."
+  sudo apt update && sudo apt install vim -y || error "Failed to install vim."
 fi
 
-info "📦 Extraindo arquivos..."
-# A opção -o força a sobrescrita sem prompt
+info "📦 Extracting files..."
+# -o forces overwriting files without prompting
 unzip -q -o "$ZIP_FILE" -d "$TMP_DIR"
 
-# Encontrar o diretório extraído (nome contendo “install-sgv”)
+# Find the extracted directory (its name contains "install-sgv")
 EXTRACTED_DIR=$(find "$TMP_DIR" -maxdepth 1 -type d -name "*install-sgv*" | head -n 1)
-[ -z "$EXTRACTED_DIR" ] && error "Falha ao encontrar o diretório extraído."
+[ -z "$EXTRACTED_DIR" ] && error "Failed to find the extracted directory."
 
-info "📂 Listando conteúdo do diretório extraído ($EXTRACTED_DIR):"
+info "📂 Listing content of the extracted directory ($EXTRACTED_DIR):"
 ls -la "$EXTRACTED_DIR"
 
-info "🔍 Listagem recursiva de arquivos:"
+info "🔍 Recursive file listing:"
 find "$EXTRACTED_DIR" -type f
 
 cd "$EXTRACTED_DIR"
 
-# Função para encontrar um script pelo padrão de nome
+# Function to find a script by pattern
 function find_script {
   local found=""
   for pattern in "$@"; do
@@ -69,32 +66,23 @@ function find_script {
   return 1
 }
 
-DOCKER_SCRIPT=$(find_script "installDocker.sh" "install-docker.sh" "docker.sh")
-if [ -z "$DOCKER_SCRIPT" ]; then
-  info "Arquivos disponíveis na árvore atual:"
-  find . -type f
-  error "Script de instalação do Docker não encontrado."
-fi
+DOCKER_SCRIPT=$(find_script "installDocker.sh" )
+[ -z "$DOCKER_SCRIPT" ] && { info "Available files:"; find . -type f; error "Docker installation script not found."; }
 
-SGV_SCRIPT=$(find_script "installSgv.sh" "install-sgv.sh" "sgv.sh" "installsgv.sh")
-if [ -z "$SGV_SCRIPT" ]; then
-  info "Arquivos disponíveis na árvore atual:"
-  find . -type f
-  error "Script de instalação do SGV não encontrado."
-fi
+SGV_SCRIPT=$(find_script "installsgv.sh")
+[ -z "$SGV_SCRIPT" ] && { info "Available files:"; find . -type f; error "SGV installation script not found."; }
 
-# Copiar os sub-scripts para um diretório temporário separado para isolá-los
+# Copy sub-scripts to a separate directory so they run independently
 SUB_DIR="/tmp/install-sgv-sub"
 mkdir -p "$SUB_DIR"
 cp "$DOCKER_SCRIPT" "$SUB_DIR/"
 cp "$SGV_SCRIPT" "$SUB_DIR/"
 chmod +x "$SUB_DIR/"*.sh
 
-# Executa os sub-scripts definindo a variável SKIP_DOWNLOAD para que não repitam a etapa de download/extração
-info "🐳 Instalando Docker usando: $SUB_DIR/$(basename "$DOCKER_SCRIPT")"
-SKIP_DOWNLOAD=1 "$SUB_DIR/$(basename "$DOCKER_SCRIPT")" || error "Falha ao executar o script de instalação do Docker."
+info "🐳 Running Docker installation script..."
+SKIP_DOWNLOAD=1 "$SUB_DIR/$(basename "$DOCKER_SCRIPT")" || error "Docker installation script failed."
 
-info "🚀 Instalando SGV usando: $SUB_DIR/$(basename "$SGV_SCRIPT")"
-SKIP_DOWNLOAD=1 "$SUB_DIR/$(basename "$SGV_SCRIPT")" || error "Falha ao executar o script de instalação do SGV."
+info "🚀 Running SGV installation script..."
+SKIP_DOWNLOAD=1 "$SUB_DIR/$(basename "$SGV_SCRIPT")" || error "SGV installation script failed."
 
-info "✅ Instalação finalizada com sucesso!"
+info "✅ Installation completed successfully!"

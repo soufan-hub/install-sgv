@@ -25,6 +25,9 @@ function downloadJenkins() {
   echo "${app_name} atualizado com sucesso"
 }
 
+# Ensure backup directory exists before downloading the backup file
+mkdir -p backup
+
 # Ensure backup file is present; if not, download it.
 if [ ! -f "./backup/alo.dump" ]; then
   echo "Backup file not found. Downloading..."

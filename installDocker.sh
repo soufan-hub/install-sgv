@@ -2,7 +2,7 @@
 set -euo pipefail
 trap 'echo -e "\033[91mERROR: Command \"$BASH_COMMAND\" failed at line $LINENO with exit code $?." >&2; exit 1' ERR
 
-REQUIRED_DOCKER_VERSION="24.0.2"
+REQUIRED_DOCKER_VERSION="28.0.2"
 DOCKER_REPO_URL="https://download.docker.com/linux/ubuntu"
 UBUNTU_CODENAME=$(lsb_release -cs)
 

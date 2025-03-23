@@ -2,7 +2,7 @@
 set -euo pipefail
 
 REPO="soufan-hub/install-sgv"
-TMP_DIR="/tmp/install-sgv"
+TMP_DIR="./install-sgv"
 ZIP_FILE="$TMP_DIR/latest.zip"
 
 function error {
@@ -73,16 +73,14 @@ SGV_SCRIPT=$(find_script "installsgv.sh")
 [ -z "$SGV_SCRIPT" ] && { info "Available files:"; find . -type f; error "SGV installation script not found."; }
 
 # Copy sub-scripts to a separate directory so they run independently
-SUB_DIR="/tmp/install-sgv-sub"
-mkdir -p "$SUB_DIR"
-cp "$DOCKER_SCRIPT" "$SUB_DIR/"
-cp "$SGV_SCRIPT" "$SUB_DIR/"
-chmod +x "$SUB_DIR/"*.sh
+cp "$DOCKER_SCRIPT" "$TMP_DIR/"
+cp "$SGV_SCRIPT" "$TMP_DIR/"
+chmod +x "$TMP_DIR/"*.sh
 
 info "🐳 Running Docker installation script..."
-SKIP_DOWNLOAD=1 "$SUB_DIR/$(basename "$DOCKER_SCRIPT")" || error "Docker installation script failed."
+SKIP_DOWNLOAD=1 "$TMP_DIR/$(basename "$DOCKER_SCRIPT")" || error "Docker installation script failed."
 
 info "🚀 Running SGV installation script..."
-SKIP_DOWNLOAD=1 "$SUB_DIR/$(basename "$SGV_SCRIPT")" || error "SGV installation script failed."
+SKIP_DOWNLOAD=1 "$TMP_DIR/$(basename "$SGV_SCRIPT")" || error "SGV installation script failed."
 
 info "✅ Installation completed successfully!"

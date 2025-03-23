@@ -5,6 +5,15 @@ REPO="soufan-hub/install-sgv"
 WORKDIR="install-sgv"
 ZIPFILE="latest.zip"
 
+# Verifica se o curl está instalado
+if ! command -v curl &>/dev/null; then
+  echo "⚠️  curl não encontrado. Instalando..."
+  sudo apt update && sudo apt install -y curl || {
+    echo "❌ Falha ao instalar curl"
+    exit 1
+  }
+fi
+
 echo "🌀 Criando diretório $WORKDIR..."
 mkdir -p "$WORKDIR"
 cd "$WORKDIR"

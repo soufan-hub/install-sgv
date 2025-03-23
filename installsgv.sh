@@ -72,12 +72,9 @@ SGV_SCRIPT=$(find_script "installsgv.sh")
 # Copy sub-scripts to a separate directory so they run independently
 SUB_DIR="/tmp/install-sgv-sub"
 mkdir -p "$SUB_DIR"
-cp "$DOCKER_SCRIPT" "$SUB_DIR/"
 cp "$SGV_SCRIPT" "$SUB_DIR/"
 chmod +x "$SUB_DIR/"*.sh
 
-info "🐳 Running Docker installation script..."
-SKIP_DOWNLOAD=1 "$SUB_DIR/$(basename "$DOCKER_SCRIPT")" || error "Docker installation script failed."
 
 info "🚀 Running SGV installation script..."
 SKIP_DOWNLOAD=1 "$SUB_DIR/$(basename "$SGV_SCRIPT")" || error "SGV installation script failed."

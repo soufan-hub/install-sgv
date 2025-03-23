@@ -21,10 +21,10 @@ cd "$EXTRACTED_DIR"
 
 echo "🐳 Instalando Docker..."
 chmod +x installDocker.sh
-./installDocker.sh
+sudo ./installDocker.sh
 
 echo "🚀 Instalando SGV..."
 chmod +x installsgv.sh
-./installsgv.sh
+sudo ./installsgv.sh
 
 echo "✅ Instalação finalizada com sucesso!"

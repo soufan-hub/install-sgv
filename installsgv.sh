@@ -29,9 +29,9 @@ function downloadJenkins() {
 mkdir -p backup
 
 # Ensure backup file is present; if not, download it.
-if [ ! -f "./backup/alo.dump" ]; then
+if [ ! -f "backup/alo.dump" ]; then
   echo "Backup file not found. Downloading..."
-  if ! curl -sSL "https://sga-file.s3.sa-east-1.amazonaws.com/sgv/new/alop_sgv_20230805.backup" -X GET -o "./backup/alo.dump"; then
+  if ! curl -sSL "https://sga-file.s3.sa-east-1.amazonaws.com/sgv/new/alop_sgv_20230805.backup" -X GET -o "backup/alo.dump"; then
     error "Failed to download backup file"
   fi
 fi

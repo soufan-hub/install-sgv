@@ -78,9 +78,9 @@ cp "$SGV_SCRIPT" "$TMP_DIR/"
 chmod +x "$TMP_DIR/"*.sh
 
 info "🐳 Running Docker installation script..."
-SKIP_DOWNLOAD=1 "$TMP_DIR/$(basename "$DOCKER_SCRIPT")" || error "Docker installation script failed."
+"$TMP_DIR/$(basename "$DOCKER_SCRIPT")" || error "Docker installation script failed."
 
 info "🚀 Running SGV installation script..."
-SKIP_DOWNLOAD=1 "$TMP_DIR/$(basename "$SGV_SCRIPT")" || error "SGV installation script failed."
+"$TMP_DIR/$(basename "$SGV_SCRIPT")" || error "SGV installation script failed."
 
 info "✅ Installation completed successfully!"

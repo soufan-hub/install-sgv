@@ -1,5 +1,6 @@
 #!/bin/bash
 set -euo pipefail
+export DEBIAN_FRONTEND=noninteractive
 
 if [ "${EUID:-$(id -u)}" -eq 0 ]; then
     SUDO=""
@@ -29,7 +30,7 @@ echo "Updating package lists..."
 $SUDO apt-get update -qq
 
 echo "Installing required packages: ca-certificates, curl, gnupg, and lsb-release..."
-$SUDO apt-get install -y -qq ca-certificates curl gnupg lsb-release
+$SUDO apt-get install -y -qq --no-install-recommends ca-certificates curl gnupg lsb-release
 
 UBUNTU_CODENAME=$(lsb_release -cs)
 
@@ -74,7 +75,7 @@ if [ "$current_version" != "$REQUIRED_DOCKER_VERSION" ]; then
         TARGET_VERSION=$(apt-cache madison docker-ce | head -n1 | awk '{print $3}')
     fi
     echo "Installing Docker version: $TARGET_VERSION"
-    $SUDO apt-get install -y docker-ce="$TARGET_VERSION" docker-ce-cli="$TARGET_VERSION" containerd.io docker-compose-plugin docker-ce-rootless-extras docker-buildx-plugin || { echo "Failed to install Docker version $TARGET_VERSION."; exit 1; }
+    $SUDO apt-get install -y -qq --no-install-recommends docker-ce="$TARGET_VERSION" docker-ce-cli="$TARGET_VERSION" containerd.io docker-compose-plugin docker-ce-rootless-extras docker-buildx-plugin || { echo "Failed to install Docker version $TARGET_VERSION."; exit 1; }
 else
     echo "Docker is already at the required version ($REQUIRED_DOCKER_VERSION)."
 fi

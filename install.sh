@@ -1,5 +1,6 @@
 #!/bin/bash
 set -euo pipefail
+export DEBIAN_FRONTEND=noninteractive
 
 REPO="soufan-hub/install-sgv"
 WORKDIR="install-sgv"

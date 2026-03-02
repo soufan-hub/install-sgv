@@ -1,6 +1,6 @@
 # install-sgv
-Contem os scripts necessarios para instalar o servidor sgv
+Instalacao simplificada do servidor SGV (1 comando).
 
 ``` sh
-bash <(curl -fsSL https://raw.githubusercontent.com/soufan-hub/install-sgv/main/install.sh)
+curl -fsSL https://raw.githubusercontent.com/soufan-hub/install-sgv/main/install.sh | sudo bash
 ```

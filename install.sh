@@ -41,7 +41,7 @@ curl -fL "$ZIP_URL" -o "$ZIPFILE"
 
 echo "📦 Extraindo arquivos..."
 unzip -o "$ZIPFILE" >/dev/null
-EXTRACTED_DIR=$(unzip -Z1 "$ZIPFILE" | head -n1 | cut -d/ -f1)
+EXTRACTED_DIR=$(unzip -Z1 "$ZIPFILE" | cut -d/ -f1 | sed -n '1p')
 if [ -z "$EXTRACTED_DIR" ] || [ ! -d "$EXTRACTED_DIR" ]; then
   echo "❌ Não foi possível identificar o diretório extraído da release."
   exit 1

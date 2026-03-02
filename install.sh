@@ -4,12 +4,23 @@ set -euo pipefail
 REPO="soufan-hub/install-sgv"
 WORKDIR="install-sgv"
 ZIPFILE="latest.zip"
+GITHUB_API_URL="https://api.github.com/repos/$REPO/releases/latest"
 
-# Verifica se o curl está instalado
-if ! command -v curl &>/dev/null; then
-  echo "⚠️  curl não encontrado. Instalando..."
-  sudo apt update && sudo apt install -y curl || {
-    echo "❌ Falha ao instalar curl"
+if [ "${EUID:-$(id -u)}" -eq 0 ]; then
+  SUDO=""
+else
+  SUDO="sudo"
+  if ! command -v sudo &>/dev/null; then
+    echo "❌ sudo não encontrado. Execute como root ou instale sudo."
+    exit 1
+  fi
+fi
+
+# Verifica dependências mínimas para download e extração da release.
+if ! command -v curl &>/dev/null || ! command -v unzip &>/dev/null; then
+  echo "⚠️  Dependências ausentes. Instalando curl e unzip..."
+  $SUDO apt update && $SUDO apt install -y curl unzip || {
+    echo "❌ Falha ao instalar dependências (curl/unzip)"
     exit 1
   }
 fi
@@ -19,21 +30,29 @@ mkdir -p "$WORKDIR"
 cd "$WORKDIR"
 
 echo "📥 Baixando última release de $REPO..."
-ZIP_URL=$(curl -s https://api.github.com/repos/$REPO/releases/latest | grep zipball_url | cut -d '"' -f 4)
-curl -L "$ZIP_URL" -o "$ZIPFILE"
+ZIP_URL=$(curl -fsSL "$GITHUB_API_URL" | sed -n 's/.*"zipball_url":[[:space:]]*"\([^"]*\)".*/\1/p' | head -n1)
+if [ -z "$ZIP_URL" ]; then
+  echo "❌ Não foi possível obter zipball_url da release mais recente."
+  echo "💡 Verifique se o repositório existe e se há release publicada: $REPO"
+  exit 1
+fi
+curl -fL "$ZIP_URL" -o "$ZIPFILE"
 
 echo "📦 Extraindo arquivos..."
 unzip -o "$ZIPFILE" >/dev/null
-
-EXTRACTED_DIR=$(find . -type d -name "*install-sgv*" | head -n 1)
+EXTRACTED_DIR=$(unzip -Z1 "$ZIPFILE" | head -n1 | cut -d/ -f1)
+if [ -z "$EXTRACTED_DIR" ] || [ ! -d "$EXTRACTED_DIR" ]; then
+  echo "❌ Não foi possível identificar o diretório extraído da release."
+  exit 1
+fi
 cd "$EXTRACTED_DIR"
 
 echo "🐳 Instalando Docker..."
 chmod +x installDocker.sh
-sudo ./installDocker.sh
+$SUDO ./installDocker.sh
 
 echo "🚀 Instalando SGV..."
 chmod +x installsgv.sh
-sudo ./installsgv.sh
+$SUDO ./installsgv.sh
 
 echo "✅ Instalação finalizada com sucesso!"

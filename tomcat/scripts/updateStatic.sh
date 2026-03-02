@@ -1,2 +1,2 @@
 #!/bin/bash
-/java/scripts/installWar.sh static http://hom.voy.com.br/jenkins/view/SGV/job/static/ws/target/static.war
+/java/scripts/installWar.sh static https://s3.fanticekts.com/sgv/static.war https://s3.fanticekts.com/sgv/static.war.md5

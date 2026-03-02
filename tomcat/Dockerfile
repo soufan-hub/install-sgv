@@ -18,8 +18,8 @@ RUN apt install -y htop sudo postgresql-client
 WORKDIR /java
 RUN wget --timeout 3600 --progress=bar:force:noscroll -N -P /java/install -v https://github.com/adoptium/temurin8-binaries/releases/download/jdk8u482-b08/OpenJDK8U-jdk_x64_linux_hotspot_8u482b08.tar.gz
 
-RUN tar xvzf ./install/jdk*.tar.gz
-RUN mv /java/jdk* /java/jdk
+RUN tar xvzf /java/install/OpenJDK8U-jdk_x64_linux_hotspot_8u482b08.tar.gz -C /java
+RUN mv /java/jdk8u482-b08 /java/jdk
 RUN echo "export JAVA_HOME=/java/jdk" >> /etc/bash.bashrc
 RUN echo "export PATH=$PATH:$JAVA_HOME/bin" >> /etc/bash.bashrc
 RUN wget --timeout 3600 --progress=bar:force:noscroll -N -P /java/install -v https://s3.fantickets.app/sgv/apache-tomcat-8.5.15.zip

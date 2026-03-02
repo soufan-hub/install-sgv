@@ -16,7 +16,7 @@ RUN apt update
 RUN apt install -y htop sudo postgresql-client
 
 WORKDIR /java
-RUN wget --timeout 3600 --progress=bar:force:noscroll -N -P /java/install -v https://github.com/adoptium/temurin8-binaries/releases/download/jdk8u482-b08/OpenJDK8U-jdk_x64_linux_hotspot_8u482b08.tar.gz && true
+RUN wget --timeout 3600 --progress=bar:force:noscroll -N -P /java/install -v https://github.com/adoptium/temurin8-binaries/releases/download/jdk8u482-b08/OpenJDK8U-jdk_x64_linux_hotspot_8u482b08.tar.gz
 
 RUN tar xvzf ./install/jdk*.tar.gz
 RUN mv /java/jdk* /java/jdk

@@ -5,7 +5,10 @@ export DEBIAN_FRONTEND=noninteractive
 REPO="soufan-hub/install-sgv"
 WORKDIR="install-sgv"
 ZIPFILE="latest.zip"
-GITHUB_API_URL="https://api.github.com/repos/$REPO/releases/latest"
+ZIP_URL="https://codeload.github.com/$REPO/zip/refs/heads/main"
+INSTALLER_VERSION="v0.0.20"
+
+echo "🚀 Iniciando instalador SGV (${INSTALLER_VERSION})"
 
 if [ "${EUID:-$(id -u)}" -eq 0 ]; then
   SUDO=""
@@ -20,7 +23,7 @@ fi
 # Verifica dependências mínimas para download e extração da release.
 if ! command -v curl &>/dev/null || ! command -v unzip &>/dev/null; then
   echo "⚠️  Dependências ausentes. Instalando curl e unzip..."
-  $SUDO apt update && $SUDO apt install -y curl unzip || {
+  $SUDO apt-get update && $SUDO apt-get install -y --no-install-recommends curl unzip || {
     echo "❌ Falha ao instalar dependências (curl/unzip)"
     exit 1
   }
@@ -30,14 +33,8 @@ echo "🌀 Criando diretório $WORKDIR..."
 mkdir -p "$WORKDIR"
 cd "$WORKDIR"
 
-echo "📥 Baixando última release de $REPO..."
-ZIP_URL=$(curl -fsSL "$GITHUB_API_URL" | sed -n 's/.*"zipball_url":[[:space:]]*"\([^"]*\)".*/\1/p' | head -n1)
-if [ -z "$ZIP_URL" ]; then
-  echo "❌ Não foi possível obter zipball_url da release mais recente."
-  echo "💡 Verifique se o repositório existe e se há release publicada: $REPO"
-  exit 1
-fi
-curl -fL "$ZIP_URL" -o "$ZIPFILE"
+echo "📥 Baixando versão mais recente da branch main de $REPO..."
+curl -fsSL "$ZIP_URL" -o "$ZIPFILE"
 
 echo "📦 Extraindo arquivos..."
 unzip -o "$ZIPFILE" >/dev/null

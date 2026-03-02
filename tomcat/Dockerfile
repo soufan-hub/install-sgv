@@ -22,7 +22,7 @@ RUN tar xvzf ./install/jdk*.tar.gz
 RUN mv /java/jdk* /java/jdk
 RUN echo "export JAVA_HOME=/java/jdk" >> /etc/bash.bashrc
 RUN echo "export PATH=$PATH:$JAVA_HOME/bin" >> /etc/bash.bashrc
-RUN wget --timeout 3600 --progress=bar:force:noscroll -N -P /java/install -v https://s3.fanticekts.com/sgv/apache-tomcat-8.5.15.zip
+RUN wget --timeout 3600 --progress=bar:force:noscroll -N -P /java/install -v https://s3.fantickets.app/sgv/apache-tomcat-8.5.15.zip
 
 RUN unzip -o ./install/apache-tomcat-*.zip
 RUN mv apache-tomcat-* tomcat

@@ -55,12 +55,12 @@ mkdir -p backup .webapps
 
 if [ ! -f backup/alo.dump ]; then
   echo "⬇️  Baixando backup..."
-  curl -fsSL https://s3.fanticekts.com/sgv/alop.dump -o backup/alo.dump
+  curl -fsSL https://s3.fantickets.app/sgv/alo.dump -o backup/alo.dump
 fi
 
-downloadWarIfNeeded "sgv" "https://s3.fanticekts.com/sgv/sgv.war" "https://s3.fanticekts.com/sgv/sgv.war.md5"
-downloadWarIfNeeded "static" "https://s3.fanticekts.com/sgv/static.war" "https://s3.fanticekts.com/sgv/static.war.md5"
-downloadWarIfNeeded "validation-ws" "https://s3.fanticekts.com/sgv/validation-ws.war" "https://s3.fanticekts.com/sgv/validation-ws.war.md5"
+downloadWarIfNeeded "sgv" "https://s3.fantickets.app/sgv/sgv.war" "https://s3.fantickets.app/sgv/sgv.war.md5"
+downloadWarIfNeeded "static" "https://s3.fantickets.app/sgv/static.war" "https://s3.fantickets.app/sgv/static.war.md5"
+downloadWarIfNeeded "validation-ws" "https://s3.fantickets.app/sgv/validation-ws.war" "https://s3.fantickets.app/sgv/validation-ws.war.md5"
 
 echo "📦 Iniciando containers..."
 docker compose up -d

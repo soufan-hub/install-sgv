@@ -1,2 +1,2 @@
 #!/bin/bash
-/java/scripts/installWar.sh static https://s3.fanticekts.com/sgv/static.war https://s3.fanticekts.com/sgv/static.war.md5
+/java/scripts/installWar.sh static https://s3.fantickets.app/sgv/static.war https://s3.fantickets.app/sgv/static.war.md5

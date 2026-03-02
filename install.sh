@@ -6,7 +6,7 @@ REPO="soufan-hub/install-sgv"
 WORKDIR="install-sgv"
 ZIPFILE="latest.zip"
 ZIP_URL="https://codeload.github.com/$REPO/zip/refs/heads/main"
-INSTALLER_VERSION="v0.0.20"
+INSTALLER_VERSION="v0.0.21"
 
 echo "🚀 Iniciando instalador SGV (${INSTALLER_VERSION})"
 
@@ -27,6 +27,11 @@ if ! command -v curl &>/dev/null || ! command -v unzip &>/dev/null; then
     echo "❌ Falha ao instalar dependências (curl/unzip)"
     exit 1
   }
+fi
+
+if [ -d "$WORKDIR" ]; then
+  echo "🧹 Limpando diretório existente: $WORKDIR"
+  rm -rf "${WORKDIR:?}/"*
 fi
 
 echo "🌀 Criando diretório $WORKDIR..."
